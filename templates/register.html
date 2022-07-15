@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<h1>Task Master</h1>
+{% endblock %}
+
+{% block body %}
+<div class="content">
+    <form action="/register" method="post"> 
+        {{ form.hidden_tag() }}
+        {{ form.username }}
+        {{ form.password }}
+        {{ form.submit }}
+    </form>
+
+
+    <a href="{{ url_for('login')}}">Already have account? Login here</a>
+</div>
+{% endblock %}

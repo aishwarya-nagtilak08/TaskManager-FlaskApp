@@ -1,0 +1,99 @@
+from asyncio import Task
+from crypt import methods
+from email.policy import default
+from enum import unique
+from importlib.resources import contents
+from logging import PlaceHolder
+from click import password_option
+from flask import Flask, redirect, render_template, request, session, url_for, redirect
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+from flask_login import UserMixin
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import InputRequired, Length, ValidationError
+from flask_bcrypt import Bcrypt
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+db = SQLAlchemy(app)
+
+
+class Todo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(200), nullable=False)
+    completed = db.Column(db.Integer, default=0)
+    date_creates = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return '<Task %r>' % self.id
+
+@app.route('/',methods=['POST','GET'])
+def insert():
+    if request.method == 'POST':
+        #return 'Hello Post method'
+        print('insert() called')
+        task_content = request.form['content']
+        new_task = Todo(content=task_content)
+        print('new_task',new_task)
+        try:
+            db.session.add(new_task)
+            db.session.commit()
+            return redirect('/')
+        except:
+            return 'Insert Exception'
+
+    else:
+        tasks = Todo.query.order_by(Todo.date_creates).all()
+        return render_template('index.html', tasks=tasks) 
+
+@app.route('/delete/<int:id>')
+def delete(id):
+    task_to_delete = Todo.query.get_or_404(id)
+
+    try:
+        db.session.delete(task_to_delete)
+        db.session.commit()
+        return redirect('/')
+
+    except:
+        return 'Delete Exception'
+
+@app.route('/update/<int:id>', methods = ['GET','POST'])
+def update(id):
+    task_to_update = Todo.query.get_or_404(id)
+    if request.method == 'POST':
+        task_to_update.content = request.form['content']
+        print('*********************',task_to_update)
+
+        try:
+            db.session.commit()
+            return redirect('/')
+        except:
+            return 'Update Exception'
+    else:
+        return render_template('update.html', task_to_update=task_to_update)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+
+
+
+    **************login backup*************
+    @app.route('/login', methods=['POST', 'GET'])
+    def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        print('login post called')
+        user = User.query.filter_by(username=form.username.data).first()
+        if user:
+            if bcrypt.check_password_hash(user.password, form.password.data):
+                login_user(user)
+                return redirect(url_for('insert'))
+        
+    else:
+        print('login get callled')
+        return render_template('login.html', form=form)

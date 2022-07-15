@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<h1>Task Master</h1>
+{% endblock %}
+
+{% block body %}
+<div class="content">
+    <form action="/login" method="post"> 
+       
+        <h2> {{ form.username }}, </h2>
+
+        <h4>Welcome to dashboard </h4>
+        
+    </form>
+    <a href="{{ url_for('insert')}}">Create tasks here</a>
+</div>
+{% endblock %}

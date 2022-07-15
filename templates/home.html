@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<h1>Task Master</h1>
+{% endblock %}
+
+{% block body %}
+<div class="content">
+    <a href="{{ url_for('login')}}">Login Page</a>
+    <a href="{{ url_for('register')}}">Register Page</a>
+</div>
+{% endblock %}
