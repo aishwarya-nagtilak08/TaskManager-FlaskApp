@@ -6,13 +6,22 @@
 
 {% block body %}
 <div class="content">
+    
     <form action="/login" method="post"> 
-       
-        <h2> {{ form.username }}, </h2>
-
-        <h4>Welcome to dashboard </h4>
-        
+        {% if session['user'] %}
+        <h4>Welcome {{ session['user'] }}! </h4>
+        {% else %}
+                <h1>Welcome! Please login <a href="{{ url_for('login') }}">here.</a></h1>
+        {% endif %}
     </form>
-    <a href="{{ url_for('insert')}}">Create tasks here</a>
+    <a href="{{ url_for('insert') }}">Create tasks here</a>
+
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <a href="{{ url_for('logout') }}">logout</a>
 </div>
 {% endblock %}

@@ -20,26 +20,44 @@ from flask_login import (
     logout_user,
     login_required
 )
+from flask import Flask, render_template, redirect, request, session
+from flask_session import Session
+import redis
+
 
 app = Flask(__name__)
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SECRET_KEY'] = 'secretKey'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+#managed by redis
+#app.config['SESSION_TYPE'] = 'redis'
+#app.config['SESSION_PERMANENT'] = False
+#app.config['SESSION_USE_SIGNER'] = True
+#app.config['SESSION_REDIS'] = redis.from_url('redis://localhost:6379')
+
+app.config['SESSION_TYPE'] = 'sqlalchemy'
 db = SQLAlchemy(app)
+app.config['SESSION_SQLALCHEMY'] = db
+
+sess = Session(app)
+
 bcrypt = Bcrypt(app)
 
 class User(db.Model,UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(50),nullable=False)
+    todo = db.relationship('Todo', backref='user', lazy=True)
 
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(200), nullable=False)
     completed = db.Column(db.Integer, default=0)
     date_creates = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),default=0)
 
     def __repr__(self):
         return '<Task %r>' % self.id
@@ -74,41 +92,40 @@ def home():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        print('login post called')
         user = User.query.filter_by(username=form.username.data).first()
+
+        session['user'] = user.username
+        session['user_id'] = user.id
         if user:
             if bcrypt.check_password_hash(user.password, form.password.data):
-                print('log in completed')
                 login_user(user)
                 return render_template('dashboard.html',form=form)
+            else:
+                flash("Invalid Username or Password")  
+                return redirect('/login')
+
         else:
-            raise 'Invalid User'
+            return redirect('/login')
 
     else:
-        print('get called')
         return render_template('login.html', form=form)
 
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    print('logged out')
+    session.pop('user', default=None)
     return redirect('/')
 
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-        print('hi')
         hashed_password = bcrypt.generate_password_hash(form.password.data)
-        print('hashed_password',hashed_password)
         new_user = User(username = form.username.data, password = hashed_password)
-        print('new_user',new_user)
         try:
             db.session.add(new_user)
             db.session.commit()
-            print('user created')
-            flash('Registered successfully! Please login now')
             return redirect('/login')
         except:
             return 'Error in registration'
@@ -120,10 +137,9 @@ def register():
 @login_required
 def insert():
     if request.method == 'POST':
-        print('insert() called')
         task_content = request.form['content']
-        new_task = Todo(content=task_content)
-        print('new_task',new_task)
+        user_id = session['user_id']
+        new_task = Todo(content=task_content,user_id=user_id)
         try:
             db.session.add(new_task)
             db.session.commit()
@@ -132,7 +148,6 @@ def insert():
             return 'Insert Exception'
 
     else:
-        print('else called')
         tasks = Todo.query.order_by(Todo.date_creates).all()
         return render_template('index.html', tasks=tasks) 
 

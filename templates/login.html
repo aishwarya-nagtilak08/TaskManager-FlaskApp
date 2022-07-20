@@ -8,7 +8,7 @@
 <div class="content">
     {% for mess in get_flashed_messages()  %}
       <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        {{mess}}
+        {{ mess }}
         </div>
       {% endfor %}
     <form action="/login" method="post"> 

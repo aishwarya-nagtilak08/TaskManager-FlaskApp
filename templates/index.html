@@ -8,31 +8,41 @@
 <div class="content">
     {% if tasks|length  < 1 %}
 
-    <h4>There are no tasks. Create one below!!!</h4>
+        <h4>There are no tasks. Create one below!!!</h4>
     {% else %}
-    <table class="task">
-        <tr>
-            <th id="task-header">Task</th>
-            <th>Added</th>
-            <th>Actions</th>
-        </tr>
-        {% for task in tasks %}
+        <table class="task">
             <tr>
-                <td>{{ task.content }}</td>
-                <td>{{ task.date_creates.date() }}</td>
-                <td>
-                    <a href="/delete/{{task.id}}">Delete</a>
-                    <br>
-                    <a href="/update/{{task.id}}">Update</a>
-                </td>
+                <th id="task-header">Task</th>
+                <th>Added</th>
+                <th>Actions</th>
             </tr>
-        {% endfor %}
-    </table>
+            {% for task in tasks %}
+                {% if session['user_id'] == task.user_id %}
+                    <tr>
+                        <td>{{ task.content }}</td>
+                        <td>{{ task.date_creates.date() }}</td>
+                        <td>
+                            <a href="/delete/{{task.id}}">Delete</a>
+                            <br>
+                            <a href="/update/{{task.id}}">Update</a>
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
     {% endif %}
     <form action="/insert" method="post">
         <input type="text" name="content" id="content">
         <input type="submit" value="Add Task" >
 
     </form>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <a href="{{ url_for('logout') }}">logout</a>
+
+
 </div>
 {% endblock %}
